@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Галя Балувана - Система</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MJW7W43Q');</script>
+    
+    <!-- Custom Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'glow': '0 0 20px rgba(244, 63, 94, 0.3)',
+                    },
+                    colors: {
+                        // Цвета для Магазина (Rose)
+                        shop: {
+                            50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af',
+                            400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c',
+                        },
+                        // Цвета для Цеха (Violet)
+                        prod: {
+                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: 'Nunito', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Динамические темы кнопок */
+        .theme-shop .glass-btn { background: rgba(244, 63, 94, 0.9); }
+        .theme-prod .glass-btn { background: rgba(139, 92, 246, 0.9); }
+
+        /* Анимации */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; }
+        .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }
+
+        .list-enter-active, .list-leave-active { transition: all 0.3s ease; }
+        .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(10px); }
+
+        .pt-safe { padding-top: var(--safe-top); }
+        .pb-safe { padding-bottom: var(--safe-bottom); }
+    </style>
+</head>
+<body class="antialiased">
+
+<!-- GTM NoScript -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MJW7W43Q" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<div id="app" class="relative h-[100dvh] flex flex-col overflow-hidden max-w-lg mx-auto bg-slate-50 shadow-2xl transition-colors duration-500" :class="themeClass">
+
+    <!-- ==================== ЭКРАН ВХОДА (LOGIN) ==================== -->
+    <transition name="fade">
+        <div v-if="state === 'LOGIN'" class="absolute inset-0 z-[60] flex flex-col items-center justify-center p-6 bg-slate-50">
+            <!-- Декоративный фон -->
+            <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white to-transparent"></div>
+            
+            <div class="relative w-full max-w-sm">
+                <div class="bg-white rounded-[32px] p-8 shadow-soft border border-white/50 relative overflow-hidden">
+                    <!-- Логотип -->
+                    <div class="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center text-4xl text-white shadow-lg bg-gradient-to-br from-shop-400 to-shop-600">
+                        Г
+                    </div>
+                    
+                    <h2 class="text-2xl font-extrabold text-slate-800 text-center mb-1">Галя Балувана</h2>
+                    <p class="text-slate-400 text-center text-sm mb-8">Система замовлень</p>
+
+                    <!-- Поле ввода пароля -->
+                    <div class="relative mb-4 group">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-shop-500 transition-colors"></i>
+                        <input 
+                            v-model="password" 
+                            type="tel" 
+                            maxlength="4"
+                            placeholder="Код доступу"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-center text-xl font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-shop-500/20 focus:border-shop-500 transition-all placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 text-slate-800"
+                        >
+                    </div>
+
+                    <p v-if="loginError" class="text-red-500 text-xs font-bold text-center mb-4 animate-pulse">{{ loginError }}</p>
+
+                    <button @click="loginWithPassword" :disabled="isLoggingIn || password.length < 4" 
+                        class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100">
+                        <span v-if="!isLoggingIn">Увійти</span>
+                        <span v-else><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    </button>
+                </div>
+                
+                <p class="text-center text-slate-400 text-xs mt-6 font-medium">Введіть ID магазину або цеху</p>
+            </div>
+        </div>
+    </transition>
+
+    <!-- ==================== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==================== -->
+    <div v-if="state === 'APP'" class="flex flex-col h-full">
+        
+        <!-- HEADER -->
+        <header class="glass z-30 sticky top-0 border-b border-slate-200/60 pt-safe flex-none transition-all duration-300">
+            <div class="px-4 h-14 flex items-center justify-between">
+                
+                <!-- Левая часть: Навигация и инфо -->
+                <div class="flex items-center gap-3 w-full overflow-hidden">
+                    <!-- Кнопка Назад -->
+                    <button v-if="step > 1" @click="goBack" 
+                        class="w-9 h-9 rounded-full bg-slate-100/80 text-slate-600 flex items-center justify-center transition active:scale-90 flex-shrink-0 shadow-sm border border-slate-200/50 backdrop-blur-sm"
+                        :class="isProd ? 'hover:text-prod-600' : 'hover:text-shop-600'">
+                        <i class="fa-solid fa-arrow-left text-sm"></i>
+                    </button>
+                    
+                    <!-- Иконка роли (только на главном) -->
+                    <div v-else class="w-9 h-9 rounded-full text-white flex items-center justify-center font-bold text-lg shadow-md flex-shrink-0"
+                         :class="isProd ? 'bg-gradient-to-br from-prod-400 to-prod-600' : 'bg-gradient-to-br from-shop-400 to-shop-600'">
+                        <i :class="isProd ? 'fa-solid fa-industry text-xs' : 'fa-solid fa-store text-xs'"></i>
+                    </div>
+
+                    <!-- Заголовок -->
+                    <div class="flex flex-col justify-center min-w-0 flex-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">
+                            {{ headerSubtitle }}
+                        </span>
+                        <h1 class="font-extrabold text-slate-800 leading-none text-lg truncate pr-2">
+                            {{ headerTitle }}
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Правая часть: Выход или Очистка -->
+                <button v-if="totalItems > 0" @click="confirmClearCart" class="text-slate-400 transition p-2 active:scale-95 flex-shrink-0" :class="isProd ? 'hover:text-prod-500' : 'hover:text-shop-500'">
+                    <i class="fa-regular fa-trash-can text-lg"></i>
+                </button>
+                <button v-else @click="logout" class="text-slate-400 hover:text-slate-600 transition p-2 active:scale-95 flex-shrink-0">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ОБЛАСТЬ КОНТЕНТА -->
+        <div class="flex-1 overflow-y-auto bg-slate-50 relative pb-28 scroll-smooth" ref="scrollContainer">
+            
+            <!-- ШАГ 1: ВЫБОР ПОЛУЧАТЕЛЯ -->
+            <div v-if="step === 1" class="p-4">
+                <div class="bg-white rounded-[24px] p-6 shadow-soft border border-white mb-6 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5" :class="isProd ? 'bg-gradient-to-r from-prod-300 to-prod-500' : 'bg-gradient-to-r from-shop-300 to-shop-500'"></div>
+                    
+                    <h2 class="text-xl font-bold text-slate-800">Привіт, {{ currentLocationName }}!</h2>
+                    <p class="text-slate-400 text-sm mt-1 font-medium">
+                        {{ isProd ? 'Оберіть магазин для розподілу' : 'Оберіть цех для замовлення' }}
+                    </p>
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">
+                    {{ isProd ? 'Доступні магазини' : 'Доступні цехи' }}
+                </h3>
+                
+                <div class="grid gap-3">
+                    <button v-for="dest in destinationsList" :key="dest.id" @click="selectDestination(dest)" 
+                        class="group bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-soft transition-all duration-300 text-left flex items-center justify-between active:scale-[0.98]"
+                        :class="isProd ? 'hover:border-prod-100' : 'hover:border-shop-100'">
+                        
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center transition-colors duration-300 shadow-sm"
+                                 :class="isProd ? 'text-prod-400 group-hover:bg-prod-500 group-hover:text-white' : 'text-shop-400 group-hover:bg-shop-500 group-hover:text-white'">
+                                <i :class="isProd ? 'fa-solid fa-store' : 'fa-solid fa-industry'"></i>
+                            </div>
+                            <span class="font-extrabold text-slate-700 text-lg transition" 
+                                  :class="isProd ? 'group-hover:text-prod-600' : 'group-hover:text-shop-600'">{{ dest.name }}</span>
+                        </div>
+                        
+                        <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center transition-colors"
+                             :class="isProd ? 'group-hover:bg-prod-50 group-hover:text-prod-500' : 'group-hover:bg-shop-50 group-hover:text-shop-500'">
+                            <i class="fa-solid fa-chevron-right text-xs text-slate-300" :class="isProd ? 'group-hover:text-prod-500' : 'group-hover:text-shop-500'"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ШАГ 2: ВЫБОР КАТЕГОРИИ -->
+            <div v-else-if="step === 2" class="p-4">
+                
+                <!-- Поиск -->
+                <div class="relative mb-6">
+                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input type="text" v-model="searchQuery" placeholder="Пошук товару..." 
+                        class="w-full bg-white border border-transparent rounded-[20px] py-4 pl-12 pr-4 text-base font-bold shadow-soft focus:outline-none focus:ring-2 transition-all placeholder:text-slate-400 text-slate-800"
+                        :class="isProd ? 'focus:ring-prod-500/20 focus:border-prod-200' : 'focus:ring-shop-500/20 focus:border-shop-200'">
+                </div>
+
+                <!-- Результаты поиска (если есть текст) -->
+                <div v-if="searchQuery">
+                     <div v-if="filteredProducts.length === 0" class="text-center py-10">
+                        <div class="text-5xl mb-3 grayscale opacity-50">📂</div>
+                        <p class="text-slate-500 font-bold">Нічого не знайдено</p>
+                    </div>
+                    <!-- Reuse Product List Logic for Search -->
+                    <div class="grid gap-3">
+                         <div v-for="product in filteredProducts" :key="product.id">
+                            <!-- Этот блок идентичен блоку на шаге 3, просто дублируем логику отображения -->
+                            <div class="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all hover:shadow-md"
+                                :class="{'ring-2 border-transparent bg-slate-50/50': cart[product.id], 'ring-prod-500': cart[product.id] && isProd, 'ring-shop-500': cart[product.id] && !isProd}">
+                                
+                                <div v-if="cart[product.id]" class="absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-2xl shadow-sm z-10"
+                                     :class="isProd ? 'bg-prod-500' : 'bg-shop-500'">
+                                    {{ cart[product.id] }} кг
+                                </div>
+
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="font-bold text-slate-800 text-lg leading-snug pr-8">{{ product.name }}</h3>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <button @click="addToCart(product.id, 1)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                        :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">+1</button>
+                                    <button @click="addToCart(product.id, 5)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                        :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">+5</button>
+                                    <button @click="addToCart(product.id, 10)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                        :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">+10</button>
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Сетка Категорий -->
+                <div v-else>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Категорії</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button v-for="cat in categoriesList" :key="cat.name" @click="selectCategory(cat.name)" 
+                            class="group relative w-full bg-white h-[72px] rounded-[20px] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.1)] border border-slate-50 flex items-center px-5 overflow-hidden transition-all duration-300 active:scale-[0.97] active:shadow-inner"
+                            :class="isProd ? 'hover:shadow-[0_10px_25px_-5px_rgba(139,92,246,0.25)] hover:border-prod-100' : 'hover:shadow-[0_10px_25px_-5px_rgba(244,63,94,0.25)] hover:border-shop-100'">
+
+                            <!-- Индикатор точки -->
+                            <div class="w-2 h-2 rounded-full bg-slate-100 transition-all duration-300 shrink-0 mr-3 group-hover:scale-125"
+                                 :class="isProd ? 'group-hover:bg-prod-500' : 'group-hover:bg-shop-500'"></div>
+                            
+                            <span class="font-extrabold text-slate-700 text-[15px] group-hover:text-slate-900 transition-colors text-left leading-tight w-full truncate">
+                                {{ cat.name }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 3: СПИСОК ТОВАРОВ -->
+            <div v-else-if="step === 3" class="p-4">
+                <div class="grid gap-3">
+                    <transition-group name="list">
+                        <div v-for="product in filteredProducts" :key="product.id" 
+                            class="bg-white rounded-2xl p-4 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all hover:shadow-md"
+                            :class="{'ring-2 border-transparent bg-slate-50/50': cart[product.id], 'ring-prod-500': cart[product.id] && isProd, 'ring-shop-500': cart[product.id] && !isProd}">
+                            
+                            <!-- Бейдж количества -->
+                            <div v-if="cart[product.id]" class="absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1.5 rounded-bl-2xl shadow-sm z-10"
+                                 :class="isProd ? 'bg-prod-500' : 'bg-shop-500'">
+                                {{ cart[product.id] }} кг
+                            </div>
+
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="font-bold text-slate-800 text-lg leading-snug pr-8">{{ product.name }}</h3>
+                            </div>
+                            
+                            <!-- Кнопки действий -->
+                            <div class="flex items-center gap-2">
+                                <button @click="addToCart(product.id, 1)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                    :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">
+                                    +1
+                                </button>
+                                <button @click="addToCart(product.id, 5)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                    :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">
+                                    +5
+                                </button>
+                                <button @click="addToCart(product.id, 10)" class="haptic-btn flex-1 py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm transition active:scale-95 hover:shadow-sm"
+                                    :class="isProd ? 'hover:text-prod-600 hover:border-prod-200 hover:bg-white' : 'hover:text-shop-600 hover:border-shop-200 hover:bg-white'">
+                                    +10
+                                </button>
+                            </div>
+                        </div>
+                    </transition-group>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ПЛАВАЮЩАЯ КНОПКА КОРЗИНЫ -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 pb-safe z-30 pointer-events-none">
+            <transition name="slide-up">
+                <button v-if="totalItems > 0" @click="isCartOpen = true" 
+                    class="pointer-events-auto w-full glass-btn text-white p-2 pr-5 pl-2 rounded-[24px] shadow-2xl flex items-center justify-between backdrop-blur-xl border border-white/20 transform transition active:scale-[0.98]">
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="h-12 min-w-[3rem] rounded-[18px] flex items-center justify-center font-bold text-white shadow-lg text-lg relative border-2 border-white/20"
+                             :class="isProd ? 'bg-prod-500' : 'bg-shop-500'">
+                            {{ totalItems }}
+                            <span class="text-[10px] font-normal absolute -bottom-1 opacity-80">кг</span>
+                        </div>
+                        <div class="flex flex-col items-start">
+                            <span class="text-[10px] text-white/80 font-bold uppercase tracking-wider">
+                                {{ isProd ? 'Розподіл' : 'Кошик' }}
+                            </span>
+                            <span class="font-bold text-lg leading-none">
+                                {{ isProd ? 'Підтвердити' : 'Оформити' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-right text-white"></i>
+                    </div>
+                </button>
+            </transition>
+        </div>
+
+        <!-- МОДАЛКА КОРЗИНЫ -->
+        <transition name="slide-up">
+            <div v-if="isCartOpen" class="fixed inset-0 z-50 flex flex-col items-center justify-end sm:justify-center bg-black/40 backdrop-blur-sm" @click.self="isCartOpen = false">
+                <div class="bg-white w-full max-w-lg h-[90dvh] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col overflow-hidden relative">
+                    
+                    <!-- Header -->
+                    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white z-10">
+                        <div>
+                            <h2 class="text-2xl font-extrabold text-slate-800">{{ isProd ? 'Розподіл' : 'Ваш кошик' }}</h2>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wide mt-1">
+                                <i class="mr-1" :class="isProd ? 'fa-solid fa-store text-prod-500' : 'fa-solid fa-industry text-shop-500'"></i> 
+                                {{ selectedDestinationName }}
+                            </p>
+                        </div>
+                        <button @click="isCartOpen = false" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="flex-1 overflow-y-auto p-4 bg-slate-50">
+                        <div v-for="item in cartItems" :key="item.id" class="bg-white p-4 rounded-2xl shadow-sm mb-3 border border-slate-100 relative group">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded mb-1.5"
+                                         :class="isProd ? 'bg-prod-50 text-prod-500' : 'bg-shop-50 text-shop-500'">
+                                        {{ item.category }}
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 text-lg leading-tight">{{ item.name }}</h4>
+                                </div>
+                                <button @click="removeFromCart(item.id)" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Qty Control -->
+                            <div class="flex items-center bg-slate-50 rounded-xl p-1 border border-slate-100">
+                                <button @click="addToCart(item.id, -1)" class="haptic-btn w-12 h-10 bg-white rounded-lg shadow-sm text-slate-600 active:scale-95 transition flex items-center justify-center text-lg font-bold"
+                                        :class="isProd ? 'hover:text-prod-600' : 'hover:text-shop-600'">-</button>
+                                <div class="flex-1 text-center">
+                                    <span class="font-extrabold text-xl text-slate-800">{{ item.qty }}</span>
+                                    <span class="text-xs text-slate-400 font-bold ml-1">кг</span>
+                                </div>
+                                <button @click="addToCart(item.id, 1)" class="haptic-btn w-12 h-10 rounded-lg shadow-sm text-white active:scale-95 transition flex items-center justify-center text-lg font-bold"
+                                        :class="isProd ? 'bg-prod-500 hover:bg-prod-600' : 'bg-shop-500 hover:bg-shop-600'">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="p-4 border-t border-slate-100 bg-white pb-safe">
+                        <button @click="submitOrder" :disabled="isSending" 
+                            class="w-full text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all text-lg flex justify-center items-center gap-3 relative overflow-hidden"
+                            :class="[
+                                isProd ? 'bg-prod-600 shadow-prod-200' : 'bg-shop-600 shadow-shop-200',
+                                isSending ? 'opacity-80' : ''
+                            ]">
+                            <div v-if="isSending" class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                            <span v-if="!isSending">
+                                {{ isProd ? `Розподілити на ${selectedDestinationName}` : `Відправити на ${selectedDestinationName}` }}
+                            </span>
+                            <span v-else class="flex items-center gap-2">Відправка <i class="fa-solid fa-spinner fa-spin"></i></span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </transition>
+
+        <!-- NOTIFICATION -->
+        <transition name="slide-up">
+            <div v-if="notification.show" class="fixed top-4 left-4 right-4 z-[100] flex justify-center pointer-events-none">
+                <div class="bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-4 backdrop-blur-md bg-opacity-90 max-w-sm w-full border border-white/10">
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-black font-bold shrink-0">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm">Успішно!</h4>
+                        <p class="text-xs text-slate-300">{{ notification.message }}</p>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+    const tg = window.Telegram.WebApp;
+    // URL для отправки данных (вебхук n8n)
+    const N8N_BASE_URL = 'https://n8n.dmytrotovstytskyi.online/webhook';
+    const USE_MOCK_DATA = false;
+
+    createApp({
+        data() {
+            return {
+                state: 'LOGIN', // 'LOGIN' | 'LOADING' | 'APP'
+                step: 1,
+                
+                user: { id: 0, first_name: 'Гість' },
+                
+                // === БАЗА ДАННЫХ ===
+                locations: [
+                    // === МАГАЗИНЫ (Цвет: Rose) ===
+                    { code: '2828', name: 'Садгора', type: 'shop', id: 'sadgora' },
+                    { code: '2020', name: 'Руська', type: 'shop', id: 'ruska' },
+                    { code: '1717', name: 'Хотинська', type: 'shop', id: 'hotinska' },
+                    { code: '2619', name: 'Компас', type: 'shop', id: 'kompas' },
+                    { code: '8357', name: 'Білоруська', type: 'shop', id: 'bilorus' },
+                    { code: '3333', name: 'Кварц', type: 'shop', id: 'kvartz' },
+                    // === ЦЕХИ (Цвет: Violet) ===
+                    { code: '9001', name: 'Гравітон', type: 'production', id: 'graviton' },
+                    { code: '9002', name: 'Садова', type: 'production', id: 'sadova' },
+                    { code: '9003', name: 'Флорида', type: 'production', id: 'florida' },
+                ],
+                
+                categoriesList: [
+                    { name: 'Вареники' }, { name: 'Пельмені' }, { name: 'Млинці' },
+                    { name: 'Бендерики' }, { name: 'Котлети' }, { name: 'Сирники' },
+                    { name: 'Голубці' }, { name: 'Чебуреки' }, { name: 'Хінкалі' },
+                    { name: 'Зрази / Тісто' }, { name: 'Ковбаски' }, { name: 'Перець фарш.' },
+                    { name: 'Кулінарія / Інше' }
+                ],
+                products: [
+                    { id: 101, name: 'Вареники з шпинатом', category: 'Вареники' },
+                    { id: 102, name: 'Вареники з вишнею', category: 'Вареники' },
+                    { id: 103, name: 'Вареники з капустою', category: 'Вареники' },
+                    { id: 104, name: 'Вареники з картоплею', category: 'Вареники' },
+                    { id: 105, name: 'Вареники з картоплею і грибами', category: 'Вареники' },
+                    { id: 106, name: 'Вареники з лівером', category: 'Вареники' },
+                    { id: 107, name: 'Вареники з м\'ясом', category: 'Вареники' },
+                    { id: 108, name: 'Вареники з маком', category: 'Вареники' },
+                    { id: 109, name: 'Вареники з маслом і картоплею', category: 'Вареники' },
+                    { id: 110, name: 'Вареники з солодким сиром', category: 'Вареники' },
+                    { id: 111, name: 'Вареники з солоним сиром', category: 'Вареники' },
+                    { id: 112, name: 'Вареники з чорницею', category: 'Вареники' },
+                    { id: 113, name: 'Вареники з картоплею і сиром', category: 'Вареники' },
+                    { id: 201, name: 'Пельмені з телятиною', category: 'Пельмені' },
+                    { id: 202, name: 'Пельмені з свинини', category: 'Пельмені' },
+                    { id: 203, name: 'Пельмені з рибою', category: 'Пельмені' },
+                    { id: 204, name: 'Пельмені Свинина+Курятина', category: 'Пельмені' },
+                    { id: 205, name: 'Пельмені Свинина+Яловичина', category: 'Пельмені' },
+                    { id: 206, name: 'Пельмені з індиком', category: 'Пельмені' },
+                    { id: 207, name: 'Пельмені Три м\'яса', category: 'Пельмені' },
+                    { id: 208, name: 'Пельмені Малятко', category: 'Пельмені' },
+                    { id: 209, name: 'Пельмені Кукурудзяні з куркою', category: 'Пельмені' },
+                    { id: 210, name: 'Пельмені Козацькі', category: 'Пельмені' },
+                    { id: 301, name: 'Хінкалі з м\'ясом', category: 'Хінкалі' },
+                    { id: 302, name: 'Хінкалі з телятиною', category: 'Хінкалі' },
+                    { id: 401, name: 'Чебурек Кримський', category: 'Чебуреки' },
+                    { id: 402, name: 'Чебурек з м\'ясом', category: 'Чебуреки' },
+                    { id: 403, name: 'Чебурек Сир та зелень', category: 'Чебуреки' },
+                    { id: 404, name: 'Чебурек з куркою та моцарелою', category: 'Чебуреки' },
+                    { id: 405, name: 'Чебурек з картоплею', category: 'Чебуреки' },
+                    { id: 501, name: 'Ковбаски гриль свинні', category: 'Ковбаски' },
+                    { id: 502, name: 'Ковбаса домашня', category: 'Ковбаски' },
+                    { id: 601, name: 'Голубці з м\'ясом', category: 'Голубці' },
+                    { id: 602, name: 'Голубці з грибами', category: 'Голубці' },
+                    { id: 603, name: 'Голубці з куркою', category: 'Голубці' },
+                    { id: 604, name: 'Голубці Телятина + Яловичина', category: 'Голубці' },
+                    { id: 701, name: 'Котлета рибна (до посту)', category: 'Котлети' },
+                    { id: 702, name: 'Котлета куряча', category: 'Котлети' },
+                    { id: 703, name: 'Котлета рибна', category: 'Котлети' },
+                    { id: 704, name: 'Котлета зі свинини', category: 'Котлети' },
+                    { id: 705, name: 'Котлета індична', category: 'Котлети' },
+                    { id: 706, name: 'Котлета Бургерна', category: 'Котлети' },
+                    { id: 707, name: 'Котлета "Кордон Блю"', category: 'Котлети' },
+                    { id: 708, name: 'Котлета зі свинини і ялович.', category: 'Котлети' },
+                    { id: 709, name: 'Котлета Бургерна Куряча', category: 'Котлети' },
+                    { id: 710, name: 'Котлети "Дитячі"', category: 'Котлети' },
+                    { id: 711, name: 'Гречаники', category: 'Котлети' },
+                    { id: 712, name: 'Тефтелі класичні', category: 'Котлети' },
+                    { id: 713, name: 'Тефтелі рибні', category: 'Котлети' },
+                    { id: 714, name: 'Фрикадельки дитячі', category: 'Котлети' },
+                    { id: 715, name: 'Фрикадельки індичі', category: 'Котлети' },
+                    { id: 716, name: 'Фрикадельки курячі', category: 'Котлети' },
+                    { id: 801, name: 'Сирники', category: 'Сирники' },
+                    { id: 802, name: 'Сирники з бананом', category: 'Сирники' },
+                    { id: 803, name: 'Сирники з вишнею', category: 'Сирники' },
+                    { id: 804, name: 'Сирники з кокосом', category: 'Сирники' },
+                    { id: 805, name: 'Сирники з родзинками', category: 'Сирники' },
+                    { id: 806, name: 'Сирники з шоколадом', category: 'Сирники' },
+                    { id: 807, name: 'Сирні палички', category: 'Сирники' },
+                    { id: 808, name: 'Сирні кульки', category: 'Сирники' },
+                    { id: 901, name: 'Картопляні зрази з м\'ясом', category: 'Зрази / Тісто' },
+                    { id: 902, name: 'Картопляні зрази з лівером', category: 'Зрази / Тісто' },
+                    { id: 903, name: 'Картопляні зрази з грибами', category: 'Зрази / Тісто' },
+                    { id: 1001, name: 'Млинці з куркою та грибами', category: 'Млинці' },
+                    { id: 1002, name: 'Млинці з лівером', category: 'Млинці' },
+                    { id: 1003, name: 'Млинці з маком та вишнею', category: 'Млинці' },
+                    { id: 1004, name: 'Млинці з м\'ясом', category: 'Млинці' },
+                    { id: 1005, name: 'Млинці з полуницею та сиром', category: 'Млинці' },
+                    { id: 1006, name: 'М-ці з сиром та чорницею', category: 'Млинці' },
+                    { id: 1007, name: 'Мл-ці з сиром солодким', category: 'Млинці' },
+                    { id: 1008, name: 'Млинці шпинат з крем сиром', category: 'Млинці' },
+                    { id: 1009, name: 'Млинці з бананом та згущонкою', category: 'Млинці' },
+                    { id: 1010, name: 'Млинці Лососем + Шпинат', category: 'Млинці' },
+                    { id: 1011, name: 'Млинці Лососем + Сир', category: 'Млинці' },
+                    { id: 1012, name: 'Млинці з солоним сиром', category: 'Млинці' },
+                    { id: 1013, name: 'Млинці шинка та гол. сир', category: 'Млинці' },
+                    { id: 1014, name: 'Млинці Карамел. яблуко', category: 'Млинці' },
+                    { id: 1015, name: 'Млинці шоколад + вишня', category: 'Млинці' },
+                    { id: 1016, name: 'Млинці банан + сир + шоколад', category: 'Млинці' },
+                    { id: 1017, name: 'Млинці крем сир малинка', category: 'Млинці' },
+                    { id: 1018, name: 'Млинці крем сир манго', category: 'Млинці' },
+                    { id: 1019, name: 'Млинці шок банан', category: 'Млинці' },
+                    { id: 1101, name: 'Бендерики з куркою', category: 'Бендерики' },
+                    { id: 1102, name: 'Бендерики з м\'ясом', category: 'Бендерики' },
+                    { id: 1103, name: 'Бендерики з сиром', category: 'Бендерики' },
+                    { id: 1104, name: 'Бендерики шпинатні з сиром', category: 'Бендерики' },
+                    { id: 1201, name: 'Скумбрія фарширована', category: 'Кулінарія / Інше' },
+                    { id: 1202, name: 'Торт печінковий', category: 'Кулінарія / Інше' },
+                    { id: 1203, name: 'Торт печінковий з сиром', category: 'Кулінарія / Інше' },
+                    { id: 1204, name: 'Бедра курячі фаршировані', category: 'Кулінарія / Інше' },
+                    { id: 1205, name: 'Паштет індичий', category: 'Кулінарія / Інше' },
+                    { id: 1206, name: 'Паштет курячий', category: 'Кулінарія / Інше' },
+                    { id: 1207, name: 'Паштет свинний', category: 'Кулінарія / Інше' },
+                    { id: 1301, name: 'Перець фарширований грибами', category: 'Перець фарш.' },
+                    { id: 1302, name: 'Перець фарширований м\'ясом', category: 'Перець фарш.' },
+                ],
+                
+                // LOGIN & USER STATE
+                password: '',
+                loginError: '',
+                isLoggingIn: false,
+                userType: null, // 'shop' | 'production'
+                currentLocationId: null,
+                currentLocationName: '',
+                
+                // NAVIGATION
+                selectedDestinationId: null,
+                selectedDestinationName: '',
+                selectedCategory: '',
+                searchQuery: '',
+                
+                // CART & UI
+                isCartOpen: false,
+                isSending: false,
+                cart: {},
+                notification: { show: false, message: '' }
+            }
+        },
+        mounted() {
+            this.initTelegram();
+            // Показываем логин
+            this.state = 'LOGIN';
+            
+            // Если в ТГ, подтягиваем имя
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
+                this.user = window.Telegram.WebApp.initDataUnsafe.user;
+            }
+        },
+        computed: {
+            isProd() {
+                return this.userType === 'production';
+            },
+            themeClass() {
+                return this.isProd ? 'theme-prod' : 'theme-shop';
+            },
+            headerTitle() {
+                if (this.step === 1) return this.currentLocationName;
+                if (this.step === 2 && !this.searchQuery) return 'Категорії';
+                if (this.step === 3 || this.searchQuery) return this.searchQuery || this.selectedCategory;
+                return 'Меню';
+            },
+            headerSubtitle() {
+                if (this.step === 1) return this.isProd ? 'Розподіл' : 'Замовлення';
+                if (this.step > 1) return this.selectedDestinationName;
+                return '';
+            },
+            destinationsList() {
+                if (this.userType === 'shop') return this.locations.filter(l => l.type === 'production');
+                if (this.userType === 'production') return this.locations.filter(l => l.type === 'shop');
+                return [];
+            },
+            filteredProducts() {
+                if (this.searchQuery) {
+                    const q = this.searchQuery.toLowerCase();
+                    return this.products.filter(p => p.name.toLowerCase().includes(q));
+                }
+                return this.products.filter(p => p.category === this.selectedCategory);
+            },
+            totalItems() {
+                let sum = 0;
+                for (let id in this.cart) sum += this.cart[id];
+                return sum;
+            },
+            cartItems() {
+                const items = [];
+                for (let id in this.cart) {
+                    if (this.cart[id] > 0) {
+                        const product = this.products.find(p => p.id == id);
+                        if (product) items.push({ ...product, qty: this.cart[id] });
+                    }
+                }
+                return items.reverse();
+            }
+        },
+        methods: {
+            initTelegram() {
+                tg.ready();
+                tg.expand();
+            },
+            triggerHaptic() {
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            },
+            
+            // --- LOGIN ---
+            loginWithPassword() {
+                this.isLoggingIn = true;
+                setTimeout(() => {
+                    const loc = this.locations.find(l => l.code === this.password);
+                    if (loc) {
+                        this.currentLocationId = loc.id;
+                        this.currentLocationName = loc.name;
+                        this.userType = loc.type;
+                        this.password = '';
+                        this.state = 'APP';
+                        this.triggerHaptic();
+                        
+                        // GTM
+                        if(window.dataLayer) window.dataLayer.push({
+                            'event': 'user_login',
+                            'location_id': loc.id,
+                            'location_type': loc.type
+                        });
+                    } else {
+                        this.loginError = 'Невірний код';
+                        this.triggerHaptic();
+                        if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                    }
+                    this.isLoggingIn = false;
+                }, 600);
+            },
+            logout() {
+                this.state = 'LOGIN';
+                this.step = 1;
+                this.userType = null;
+                this.currentLocationId = null;
+                this.cart = {};
+            },
+
+            // --- NAV ---
+            selectDestination(dest) {
+                this.triggerHaptic();
+                this.selectedDestinationId = dest.id;
+                this.selectedDestinationName = dest.name;
+                this.step = 2;
+                this.$refs.scrollContainer.scrollTop = 0;
+            },
+            selectCategory(name) {
+                this.triggerHaptic();
+                this.selectedCategory = name;
+                this.step = 3;
+                this.$refs.scrollContainer.scrollTop = 0;
+            },
+            goBack() {
+                this.triggerHaptic();
+                if (this.step === 3) {
+                    this.step = 2;
+                    this.searchQuery = '';
+                } else if (this.step === 2) {
+                    if (this.totalItems > 0) {
+                        tg.showConfirm("Очистити кошик і вийти?", (ok) => {
+                            if(ok) {
+                                this.cart = {};
+                                this.step = 1;
+                            }
+                        });
+                    } else {
+                        this.step = 1;
+                    }
+                }
+            },
+
+            // --- CART ---
+            addToCart(id, amount) {
+                this.triggerHaptic();
+                if (!this.cart[id]) this.cart[id] = 0;
+                this.cart[id] += amount;
+                if (this.cart[id] <= 0) delete this.cart[id];
+            },
+            removeFromCart(id) {
+                this.triggerHaptic();
+                delete this.cart[id];
+            },
+            confirmClearCart() {
+                tg.showConfirm("Очистити все?", (ok) => {
+                    if (ok) {
+                        this.triggerHaptic();
+                        this.cart = {};
+                        this.isCartOpen = false;
+                    }
+                });
+            },
+
+            // --- SUBMIT ---
+            async submitOrder() {
+                this.isSending = true;
+                const operationType = this.isProd ? 'distribution' : 'order';
+                
+                const payload = {
+                    type: operationType,
+                    sender_type: this.userType,
+                    sender_id: this.currentLocationId,
+                    sender_name: this.currentLocationName,
+                    destination_id: this.selectedDestinationId,
+                    destination_name: this.selectedDestinationName,
+                    items: this.cartItems.map(i => ({ 
+                        id: i.id, name: i.name, category: i.category, qty: i.qty 
+                    })),
+                    timestamp: new Date().toISOString()
+                };
+
+                if (USE_MOCK_DATA) {
+                    setTimeout(() => this.finishOrder(), 1500);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${N8N_BASE_URL}/${operationType}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Network error');
+                    this.finishOrder();
+                } catch (e) {
+                    tg.showAlert(`Помилка: ${e.message}`);
+                    this.isSending = false;
+                }
+            },
+            finishOrder() {
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                this.notification.message = this.isProd ? 'Розподіл успішно відправлено!' : 'Замовлення успішно відправлено!';
+                this.notification.show = true;
+                setTimeout(() => { this.notification.show = false }, 3000);
+                
+                this.cart = {};
+                this.isCartOpen = false;
+                this.isSending = false;
+                this.step = 1;
+            }
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
